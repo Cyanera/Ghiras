@@ -20,7 +20,11 @@ export const storyRequestSchema = z.object({
     .min(1, "اسم البطل مطلوب")
     .max(40, "الاسم طويل جدًا"),
   ageGroup: z.enum(AGE_GROUPS, { message: "اختاري عمر الطفل" }),
-  value: z.enum(VALUES, { message: "اختاري القيمة" }),
+  value: z
+    .string({ required_error: "اختاري القيمة أو اكتبيها" })
+    .trim()
+    .min(1, "اختاري القيمة أو اكتبيها")
+    .max(30, "اسم القيمة طويل جدًا"),
   details: z.string().trim().max(400, "التفاصيل طويلة جدًا").optional().default(""),
 });
 

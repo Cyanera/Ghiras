@@ -27,10 +27,13 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
+const CUSTOM = "__custom__";
+
 export default function GhirasApp() {
   const [heroName, setHeroName] = useState("");
   const [ageGroup, setAgeGroup] = useState<AgeGroup | null>(null);
-  const [value, setValue] = useState<Value | null>(null);
+  const [value, setValue] = useState<Value | typeof CUSTOM | null>(null);
+  const [customValue, setCustomValue] = useState("");
   const [details, setDetails] = useState("");
 
   const [story, setStory] = useState<Story | null>(null);
@@ -60,9 +63,11 @@ export default function GhirasApp() {
     }
   }
 
+  const effectiveValue = value === CUSTOM ? customValue.trim() : value;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!heroName.trim() || !ageGroup || !value || storyLoading) return;
+    if (!heroName.trim() || !ageGroup || !effectiveValue || storyLoading) return;
 
     setStory(null);
     setImage(null);
@@ -75,7 +80,7 @@ export default function GhirasApp() {
       const data = await postJson<Story>("/api/story", {
         heroName: heroName.trim(),
         ageGroup,
-        value,
+        value: effectiveValue,
         details: details.trim(),
       });
       setStory(data);
@@ -111,7 +116,8 @@ export default function GhirasApp() {
     }
   }
 
-  const canSubmit = heroName.trim().length > 0 && !!ageGroup && !!value && !storyLoading;
+  const canSubmit =
+    heroName.trim().length > 0 && !!ageGroup && !!effectiveValue && !storyLoading;
 
   return (
     <div className="w-full">
@@ -144,7 +150,7 @@ export default function GhirasApp() {
                 key={age}
                 className={`cursor-pointer rounded-full border px-5 py-2 transition ${
                   ageGroup === age
-                    ? "border-leaf-deep bg-leaf text-white"
+                    ? "border-leaf-deep bg-leaf-deep font-bold text-white"
                     : "border-sand bg-cream hover:border-leaf"
                 }`}
               >
@@ -171,7 +177,7 @@ export default function GhirasApp() {
                 key={v}
                 className={`cursor-pointer rounded-full border px-4 py-2 text-sm transition sm:text-base ${
                   value === v
-                    ? "border-leaf-deep bg-leaf text-white"
+                    ? "border-leaf-deep bg-leaf-deep font-bold text-white"
                     : "border-sand bg-cream hover:border-leaf"
                 }`}
               >
@@ -187,7 +193,35 @@ export default function GhirasApp() {
                 {v}
               </label>
             ))}
+            <label
+              className={`cursor-pointer rounded-full border border-dashed px-4 py-2 text-sm transition sm:text-base ${
+                value === CUSTOM
+                  ? "border-leaf-deep bg-leaf-deep font-bold text-white"
+                  : "border-ink-soft/40 bg-cream hover:border-leaf"
+              }`}
+            >
+              <input
+                type="radio"
+                name="value"
+                value={CUSTOM}
+                checked={value === CUSTOM}
+                onChange={() => setValue(CUSTOM)}
+                className="sr-only"
+              />
+              + قيمة أخرى
+            </label>
           </div>
+          {value === CUSTOM && (
+            <input
+              type="text"
+              value={customValue}
+              onChange={(e) => setCustomValue(e.target.value)}
+              maxLength={30}
+              autoFocus
+              placeholder="اكتبي القيمة… مثال: بر الوالدين، حب القراءة"
+              className="mt-1 rounded-2xl border border-sand bg-cream px-4 py-3 outline-none transition placeholder:text-ink-soft/60 focus:border-leaf focus:bg-white"
+            />
+          )}
         </fieldset>
 
         <div className="flex flex-col gap-2">
@@ -244,10 +278,10 @@ export default function GhirasApp() {
               <img
                 src={image}
                 alt={story.key_scene}
-                className="aspect-square w-full object-cover"
+                className="aspect-[3/2] w-full object-cover"
               />
             ) : imageLoading ? (
-              <div className="flex aspect-square w-full animate-pulse flex-col items-center justify-center gap-3 text-leaf-deep">
+              <div className="flex aspect-[3/2] w-full animate-pulse flex-col items-center justify-center gap-3 text-leaf-deep">
                 <Spinner large />
                 <span>نرسم المشهد…</span>
               </div>
@@ -273,7 +307,7 @@ export default function GhirasApp() {
           </div>
 
           <p className="rounded-2xl bg-leaf-soft px-5 py-4 text-center text-leaf-deep">
-            🌱 {story.moral}
+            {story.moral}
           </p>
 
           {/* الأزرار */}

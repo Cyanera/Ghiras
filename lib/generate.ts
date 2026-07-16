@@ -13,27 +13,34 @@ function getClient(): OpenAI {
 
 const AGE_GUIDANCE: Record<StoryRequest["ageGroup"], string> = {
   "3-4":
-    "العمر 3–4 سنوات: قصة قصيرة جدًا (80–120 كلمة)، جُمل قصيرة بسيطة، مفردات يومية، تكرار لطيف.",
+    "العمر 3–4 سنوات: قصة من 100–150 كلمة، جُمل قصيرة إيقاعية، مفردات يومية محسوسة، تكرار لفظي لطيف يحب الصغار ترديده.",
   "5-6":
-    "العمر 5–6 سنوات: قصة قصيرة (150–220 كلمة)، جُمل واضحة، حوار بسيط، موقف واحد واضح.",
+    "العمر 5–6 سنوات: قصة من 180–280 كلمة، حوار طبيعي قصير، مشاعر واضحة، وموقف واحد يتصاعد ثم يُحل.",
   "7-8":
-    "العمر 7–8 سنوات: قصة أغنى قليلًا (220–320 كلمة) لكنها ما تزال بسيطة، مع مشاعر البطل وتفاصيل صغيرة.",
+    "العمر 7–8 سنوات: قصة من 300–450 كلمة، شخصية تواجه خيارًا حقيقيًا، تفاصيل حسية أغنى، ولمسة دعابة أو دهشة.",
 };
 
 export async function generateStory(req: StoryRequest): Promise<Story> {
   const client = getClient();
 
-  const systemPrompt = `أنت كاتب قصص أطفال عربية دافئة وبسيطة.
-اكتب قصة بالعربية الفصحى السهلة جدًا، مناسبة للأطفال، غير مخيفة وغير عنيفة، وليست وعظية بشكل ثقيل.
-القصة فيها موقف واحد واضح، تنتهي بشكل لطيف، والقيمة تظهر من خلال الحدث نفسه لا من خلال الخُطب.
+  const systemPrompt = `أنت كاتب قصص أطفال محترف، بأسلوب دور النشر العربية الراقية لأدب الطفل.
+
+قواعد الكتابة:
+- افتح القصة بمشهد حي (صوت، حركة، مفاجأة صغيرة) — لا تبدأ أبدًا بعبارات مثل "في يوم من الأيام" أو "كان يا ما كان".
+- عربية فصحى سهلة وموسيقية، بتفاصيل حسية: الألوان، الأصوات، الروائح، ملمس الأشياء.
+- حوار قصير طبيعي يشبه كلام الأطفال الحقيقيين.
+- البطل يواجه موقفًا حقيقيًا فيه خيار، ويصل إلى الحل بنفسه — الكبار يساندون ولا يُلقّنون.
+- القيمة تُفهم من الحدث ونتائجه، ولا يُذكر اسمها في نص القصة إطلاقًا، ولا تختم بجملة وعظية مثل "وهكذا تعلم أن...".
+- غير مخيفة، غير عنيفة، ونهايتها دافئة تترك ابتسامة.
+- العنوان جذاب وغير مباشر: لا تضع اسم القيمة في العنوان.
 
 أعد الإجابة بصيغة JSON فقط بهذه المفاتيح بالضبط:
 {
-  "title": "عنوان قصير وجميل للقصة بالعربية",
+  "title": "عنوان جذاب قصير بالعربية",
   "story": "نص القصة كاملًا بالعربية، بفقرات مفصولة بسطر فارغ",
-  "moral": "سطر واحد لطيف يوضح القيمة المستفادة بالعربية، دون أسلوب وعظي",
+  "moral": "سطر واحد رقيق بالعربية يلخص ما تغرسه القصة، بصياغة شاعرية غير وعظية",
   "key_scene": "وصف موجز بالعربية لأهم مشهد في القصة",
-  "image_prompt": "A detailed English prompt describing the key scene for a children's book illustration: characters, setting, mood, action. No text in the image."
+  "image_prompt": "A richly detailed English illustration brief for the single most emotional moment of the story. Describe: the child's appearance (age, hair, clothing colors), their exact expression and pose, the other characters, the setting with 3-4 specific background details, the light (golden hour, soft morning light...), and the mood. One moment only, no text in the image."
 }`;
 
   const userPrompt = `اكتب قصة أطفال بهذه المواصفات:
@@ -61,20 +68,24 @@ ${req.details ? `- تفاصيل إضافية من الأهل: ${req.details}` : 
 }
 
 const IMAGE_STYLE =
-  "Soft, warm children's picture-book illustration in a gentle cartoon style. " +
-  "Calm pastel colors, cozy and friendly atmosphere, rounded shapes, suitable for young children. " +
+  "Award-winning children's picture-book illustration. Soft watercolor and gouache textures, " +
+  "warm gentle lighting, rich yet calm pastel palette, expressive charming characters with big kind eyes, " +
+  "layered storybook composition with a clear focal point and lovely background depth. " +
   "Absolutely no text, no words, no letters, no captions anywhere in the image.";
 
 export async function generateImage(imagePrompt: string): Promise<string> {
   const client = getClient();
+  const isDalle = IMAGE_MODEL.startsWith("dall-e");
 
   const result = await client.images.generate({
     model: IMAGE_MODEL,
     prompt: `${imagePrompt}\n\nStyle: ${IMAGE_STYLE}`,
-    size: "1024x1024",
+    size: isDalle ? "1792x1024" : "1536x1024",
     n: 1,
     // نماذج dall-e تحتاج طلب b64 صراحةً، بينما gpt-image-1 يعيده افتراضيًا
-    ...(IMAGE_MODEL.startsWith("dall-e") ? { response_format: "b64_json" as const } : {}),
+    ...(isDalle
+      ? { response_format: "b64_json" as const, quality: "hd" as const }
+      : { quality: "high" as const }),
   });
 
   const item = result.data?.[0];
