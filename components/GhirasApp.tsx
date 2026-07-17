@@ -345,12 +345,6 @@ export default function GhirasApp() {
             <ActionButton onClick={copyStory}>
               {copied ? "تم النسخ ✓" : "انسخ القصة"}
             </ActionButton>
-            <ActionButton
-              onClick={() => loadImage(story.image_prompt)}
-              disabled={imageLoading}
-            >
-              أعد توليد الصورة
-            </ActionButton>
             <ActionButton onClick={resetAll} primary>
               أنشئ قصة جديدة
             </ActionButton>

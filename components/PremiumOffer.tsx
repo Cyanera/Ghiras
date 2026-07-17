@@ -10,7 +10,7 @@ type StoryInput = {
   image_prompt: string;
 };
 
-const ORDER: ProductId[] = ["illustrated", "likeness"];
+const ORDER: ProductId[] = ["extra_image", "likeness", "illustrated"];
 
 // يصغّر الصورة إلى ~1024px ويحوّلها إلى JPEG data URL لتقليل الحجم.
 function downscaleImage(file: File): Promise<string> {

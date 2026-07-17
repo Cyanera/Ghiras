@@ -18,6 +18,13 @@ export async function fulfillOrder(order: Order): Promise<OrderResult> {
     return { images: [image] };
   }
 
+  if (order.productId === "extra_image") {
+    const image = await generateImage(
+      `${order.story.image_prompt}\n\n(An alternative composition and angle of the same scene.)`
+    );
+    return { images: [image] };
+  }
+
   // القصة المصوّرة الكاملة: صورة لكل مشهد
   const scenes = await generateScenePrompts(
     {

@@ -3,7 +3,7 @@
  * المبالغ بالهللة (أصغر وحدة للريال السعودي) لتوافق بوابة ميسّر.
  */
 
-export type ProductId = "illustrated" | "likeness";
+export type ProductId = "extra_image" | "likeness" | "illustrated";
 
 export type Product = {
   id: ProductId;
@@ -15,21 +15,28 @@ export type Product = {
 };
 
 export const PRODUCTS: Record<ProductId, Product> = {
-  illustrated: {
-    id: "illustrated",
-    title: "قصة مصوّرة كاملة",
-    description: "صورة جميلة لكل مشهد من القصة، في كتيّب مصوّر يبقى لطفلك.",
-    amount: 1900, // 19 ريال
+  extra_image: {
+    id: "extra_image",
+    title: "توليد صورة جديدة",
+    description: "صورة أخرى بأسلوب وزاوية مختلفة لأجمل مشهد في القصة.",
+    amount: 300, // 3 ريال
     currency: "SAR",
   },
   likeness: {
     id: "likeness",
-    title: "صورة بملامح طفلك",
+    title: "توليد صورة جديدة بملامح طفلك",
     description:
-      "رسمة كرتونية لطيفة لأجمل مشهد، تشبه ملامح طفلك الحقيقية. (تُحذف صورته فور الإنشاء)",
-    amount: 1900, // 19 ريال
+      "رسمة كرتونية لطيفة تشبه ملامح طفلك الحقيقية. (تُحذف صورته فور الإنشاء)",
+    amount: 700, // 7 ريال
     currency: "SAR",
     needsPhoto: true,
+  },
+  illustrated: {
+    id: "illustrated",
+    title: "قصة مصوّرة كاملة",
+    description: "صورة لكل مشهد من القصة، في كتيّب مصوّر يبقى لطفلك.",
+    amount: 1900, // 19 ريال
+    currency: "SAR",
   },
 };
 
