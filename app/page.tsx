@@ -32,7 +32,7 @@ export default function Home() {
             </svg>
           </a>
           <a
-            href="https://github.com/Cyanera/Grass"
+            href="https://github.com/Cyanera/Ghiras"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="المستودع على GitHub"
