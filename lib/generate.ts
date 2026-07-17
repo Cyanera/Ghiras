@@ -12,6 +12,9 @@ import { verifyVerse } from "./quran";
 import { verifyHadith } from "./hadith";
 
 const TEXT_MODEL = process.env.OPENAI_TEXT_MODEL ?? "gpt-5.1";
+// نموذج احتياطي يُستخدم تلقائيًا إن تعذّر الوصول للنموذج الأساسي (مثلًا عدم توفّره
+// في حساب OpenAI)، فلا يتعطّل التطبيق.
+const FALLBACK_TEXT_MODEL = process.env.OPENAI_FALLBACK_MODEL ?? "gpt-4o";
 const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
 // medium = توازن جيد بين السرعة والجودة؛ يمكن رفعها إلى high من متغيرات البيئة
 const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY ?? "medium";
@@ -21,6 +24,39 @@ function getClient(): OpenAI {
     throw new Error("MISSING_API_KEY");
   }
   return new OpenAI();
+}
+
+// نماذج gpt-5 و o-series لا تقبل درجة حرارة مخصصة
+function modelSupportsTemperature(model: string): boolean {
+  return !/^(gpt-5|o\d)/.test(model);
+}
+
+type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
+/**
+ * ينفّذ طلب إكمال نصّي بصيغة JSON، ويجرّب النموذج الأساسي ثم الاحتياطي إن
+ * تعذّر الوصول للأساسي (مثلًا عدم توفّره في الحساب)، فلا يتعطّل التطبيق.
+ */
+async function createTextCompletion(client: OpenAI, messages: ChatMessage[]) {
+  const models = [...new Set([TEXT_MODEL, FALLBACK_TEXT_MODEL])];
+  let lastError: unknown;
+  for (const model of models) {
+    try {
+      return await client.chat.completions.create({
+        model,
+        ...(modelSupportsTemperature(model) ? { temperature: 0.9 } : {}),
+        response_format: { type: "json_object" },
+        messages,
+      });
+    } catch (err) {
+      lastError = err;
+      console.error(
+        `text model "${model}" failed:`,
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
+  throw lastError ?? new Error("TEXT_COMPLETION_FAILED");
 }
 
 const AGE_GUIDANCE: Record<StoryRequest["ageGroup"], string> = {
@@ -127,12 +163,7 @@ ${buildReferenceBlock(req.value, dynamic)}`;
   // مرة واحدة مع توجيه تصحيحي، فإن استمر الفشل نُسقط الاستشهاد غير الموثّق
   // بدل عرض نص غير محقّق.
   for (let attempt = 0; attempt < 2; attempt++) {
-    const completion = await client.chat.completions.create({
-      model: TEXT_MODEL,
-      ...(supportsTemperature ? { temperature: 0.9 } : {}),
-      response_format: { type: "json_object" },
-      messages,
-    });
+    const completion = await createTextCompletion(client, messages);
 
     const raw = completion.choices[0]?.message?.content;
     if (!raw) throw new Error("EMPTY_COMPLETION");
