@@ -251,3 +251,39 @@ export async function generateImage(imagePrompt: string): Promise<string> {
   }
   throw new Error("EMPTY_IMAGE");
 }
+
+/**
+ * يحوّل قصة إلى عدة أوصاف مشاهد بالإنجليزية (مشهد لكل لحظة محورية) لتوليد
+ * كتيّب مصوّر، مع الحفاظ على ثبات ملامح الطفل ولباسه بين المشاهد.
+ */
+export async function generateScenePrompts(
+  story: { title: string; paragraphs: string[]; image_prompt: string },
+  count = 3
+): Promise<string[]> {
+  const client = getClient();
+
+  const system = `You convert an Arabic children's story into exactly ${count} English illustration prompts, one per key scene, in reading order.
+Rules:
+- Keep the SAME main child's appearance, hairstyle, and clothing colors consistent across ALL scenes. Base description of the child and style: "${story.image_prompt}".
+- Warm Muslim Arab family setting, modest clothing (mother in a graceful hijab where she appears).
+- Each prompt describes ONE clear emotional moment with setting details, light, and mood.
+- Absolutely no text, words, or letters in the image.
+Return JSON only: {"scenes": ["prompt 1", "prompt 2", ...]}`;
+
+  const completion = await createTextCompletion(client, [
+    { role: "system", content: system },
+    {
+      role: "user",
+      content: `العنوان: ${story.title}\n\n${story.paragraphs.join("\n\n")}`,
+    },
+  ]);
+
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) throw new Error("EMPTY_SCENES");
+  const parsed = JSON.parse(raw) as { scenes?: unknown };
+  const scenes = Array.isArray(parsed.scenes)
+    ? parsed.scenes.filter((s): s is string => typeof s === "string" && s.trim() !== "")
+    : [];
+  if (scenes.length === 0) throw new Error("NO_SCENES");
+  return scenes.slice(0, count);
+}

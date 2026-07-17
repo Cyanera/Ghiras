@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { AGE_GROUPS, VALUES, type Story } from "@/lib/schema";
+import PremiumOffer from "./PremiumOffer";
 
 type AgeGroup = (typeof AGE_GROUPS)[number];
 type Value = (typeof VALUES)[number];
@@ -328,6 +329,16 @@ export default function GhirasApp() {
               ))}
             </div>
           )}
+
+          {/* الخدمات المدفوعة الاختيارية */}
+          <PremiumOffer
+            story={{
+              title: story.title,
+              story: story.story,
+              key_scene: story.key_scene,
+              image_prompt: story.image_prompt,
+            }}
+          />
 
           {/* الأزرار */}
           <div className="flex flex-wrap justify-center gap-3">
