@@ -317,9 +317,6 @@ export default function GhirasApp() {
           {/* هوامش الاستشهادات الموثّقة */}
           {story.citations.length > 0 && (
             <div className="flex flex-col gap-2 rounded-2xl border border-line bg-page px-5 py-4">
-              <span className="text-sm font-bold text-ink-soft">
-                المراجع (مُتحقَّق منها)
-              </span>
               {story.citations.map((c, i) => (
                 <p key={i} className="text-sm leading-relaxed text-ink-soft">
                   <span className="text-ink">{c.text}</span>
