@@ -30,8 +30,10 @@ export async function POST(request: Request) {
       );
     }
     console.error("story generation failed:", err);
+    // تشخيص مؤقت: نُظهر سبب الخطأ الفعلي لتحديد المشكلة بدقة
+    const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     return NextResponse.json(
-      { error: "تعذّر توليد القصة الآن. حاولي مرة أخرى بعد قليل." },
+      { error: `تعذّر توليد القصة الآن. (${detail})` },
       { status: 502 }
     );
   }
