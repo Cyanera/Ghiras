@@ -29,12 +29,17 @@ export type Order = {
   email: string;
   status: OrderStatus;
   story: OrderStory;
+  // صورة الطفل المرجعية (data URL) لمنتج «صورة بملامح طفلك» فقط.
+  // تُستخدم للتوليد ثم تُحذف فورًا (تُمسح بعد التنفيذ)، ولا تظهر في أي مخرجات.
+  photo?: string;
   result?: OrderResult;
   error?: string;
   createdAt: number;
 };
 
-export type NewOrder = Pick<Order, "productId" | "email" | "story">;
+export type NewOrder = Pick<Order, "productId" | "email" | "story"> & {
+  photo?: string;
+};
 
 interface OrderStore {
   create(input: NewOrder): Promise<Order>;

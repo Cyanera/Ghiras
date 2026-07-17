@@ -3,7 +3,7 @@
  * المبالغ بالهللة (أصغر وحدة للريال السعودي) لتوافق بوابة ميسّر.
  */
 
-export type ProductId = "illustrated" | "extra_image";
+export type ProductId = "illustrated" | "likeness";
 
 export type Product = {
   id: ProductId;
@@ -11,6 +11,7 @@ export type Product = {
   description: string;
   amount: number; // بالهللة (1900 = 19.00 ريال)
   currency: "SAR";
+  needsPhoto?: boolean; // يتطلّب رفع صورة الطفل
 };
 
 export const PRODUCTS: Record<ProductId, Product> = {
@@ -21,12 +22,14 @@ export const PRODUCTS: Record<ProductId, Product> = {
     amount: 1900, // 19 ريال
     currency: "SAR",
   },
-  extra_image: {
-    id: "extra_image",
-    title: "صورة إضافية",
-    description: "صورة أخرى بأسلوب مختلف لأجمل مشهد في القصة.",
-    amount: 400, // 4 ريال
+  likeness: {
+    id: "likeness",
+    title: "صورة بملامح طفلك",
+    description:
+      "رسمة كرتونية لطيفة لأجمل مشهد، تشبه ملامح طفلك الحقيقية. (تُحذف صورته فور الإنشاء)",
+    amount: 1900, // 19 ريال
     currency: "SAR",
+    needsPhoto: true,
   },
 };
 

@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 import {
   storyModelSchema,
   type Citation,
@@ -286,4 +286,37 @@ Return JSON only: {"scenes": ["prompt 1", "prompt 2", ...]}`;
     : [];
   if (scenes.length === 0) throw new Error("NO_SCENES");
   return scenes.slice(0, count);
+}
+
+/**
+ * يولّد صورة كرتونية للمشهد تشبه ملامح طفلٍ من صورة مرجعية يرفعها ولي الأمر.
+ * تُستخدم الصورة للتوليد فقط ولا تُخزَّن. يعتمد على images.edit (gpt-image-1).
+ */
+export async function generateLikenessImage(
+  photoDataUrl: string,
+  scenePrompt: string
+): Promise<string> {
+  const client = getClient();
+  const base64 = photoDataUrl.includes(",")
+    ? photoDataUrl.slice(photoDataUrl.indexOf(",") + 1)
+    : photoDataUrl;
+  const buffer = Buffer.from(base64, "base64");
+  const file = await toFile(buffer, "child.png", { type: "image/png" });
+
+  const prompt = `${scenePrompt}
+
+Render the main child to resemble the child in the provided reference photo (same face shape, hairstyle, skin tone, and general features), as a warm, friendly children's picture-book cartoon character — not a realistic photo. Keep modest clothing. Style: ${IMAGE_STYLE}`;
+
+  const result = await client.images.edit({
+    model: "gpt-image-1",
+    image: file,
+    prompt,
+    size: "1024x1024",
+    quality: IMAGE_QUALITY as "low" | "medium" | "high",
+  });
+
+  const item = result.data?.[0];
+  if (item?.b64_json) return `data:image/png;base64,${item.b64_json}`;
+  if (item?.url) return item.url;
+  throw new Error("EMPTY_IMAGE");
 }

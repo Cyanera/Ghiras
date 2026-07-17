@@ -22,7 +22,12 @@ export async function startFulfillment(orderId: string): Promise<void> {
   void (async () => {
     try {
       const result = await fulfillOrder({ ...order, status: "paid" });
-      await orderStore.update(orderId, { status: "fulfilled", result });
+      // نحذف صورة الطفل فور الانتهاء (خصوصية): لا تُخزَّن ولا تظهر في المخرجات
+      await orderStore.update(orderId, {
+        status: "fulfilled",
+        result,
+        photo: undefined,
+      });
       const product = getProduct(order.productId);
       await sendEmail({
         to: order.email,
@@ -35,9 +40,11 @@ export async function startFulfillment(orderId: string): Promise<void> {
       }).catch((e) => console.error("email failed:", e));
     } catch (err) {
       console.error("fulfillment failed:", err);
+      // نحذف الصورة حتى عند الفشل (لا نحتفظ بها إطلاقًا)
       await orderStore.update(orderId, {
         status: "failed",
         error: err instanceof Error ? err.message : String(err),
+        photo: undefined,
       });
     }
   })();

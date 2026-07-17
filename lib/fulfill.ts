@@ -1,13 +1,19 @@
-import { generateImage, generateScenePrompts } from "./generate";
+import {
+  generateImage,
+  generateLikenessImage,
+  generateScenePrompts,
+} from "./generate";
 import type { Order, OrderResult } from "./orders";
 
 /**
  * تنفيذ الخدمة المدفوعة بعد تأكيد الدفع: يولّد المخرجات (صور) حسب نوع المنتج.
  */
 export async function fulfillOrder(order: Order): Promise<OrderResult> {
-  if (order.productId === "extra_image") {
-    const image = await generateImage(
-      `${order.story.image_prompt}\n\n(An alternative composition and angle of the same scene.)`
+  if (order.productId === "likeness") {
+    if (!order.photo) throw new Error("MISSING_PHOTO");
+    const image = await generateLikenessImage(
+      order.photo,
+      order.story.image_prompt
     );
     return { images: [image] };
   }

@@ -15,6 +15,12 @@ const checkoutSchema = z.object({
     key_scene: z.string().min(1),
     image_prompt: z.string().min(1),
   }),
+  // صورة الطفل (data URL) لمنتج «صورة بملامح طفلك» فقط — تُحذف بعد التوليد
+  photo: z
+    .string()
+    .startsWith("data:image/")
+    .max(8_000_000, "الصورة كبيرة جدًا")
+    .optional(),
 });
 
 export async function POST(request: Request) {
@@ -31,11 +37,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
+  const product = PRODUCTS[parsed.data.productId as ProductId];
+  if (product.needsPhoto && !parsed.data.photo) {
+    return NextResponse.json(
+      { error: "يلزم رفع صورة الطفل لهذه الخدمة." },
+      { status: 400 }
+    );
+  }
+
   try {
     const order = await orderStore.create({
       productId: parsed.data.productId as ProductId,
       email: parsed.data.email,
       story: parsed.data.story,
+      photo: product.needsPhoto ? parsed.data.photo : undefined,
     });
     const payment = await createPayment(order);
     return NextResponse.json({ orderId: order.id, url: payment.url });
