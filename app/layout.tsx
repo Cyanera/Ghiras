@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 /* خط Baloo Bhaijaan 2 — عربي مدوّر مرح، ملف متغيّر يغطي الأوزان 400–800 */
@@ -10,8 +11,17 @@ const baloo = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ghiras.kids"),
   title: "غِراس — قصصٌ تُروى، وقيمٌ تُغرس",
-  description: "أداة بسيطة تولّد قصة أطفال مخصصة مع صورة لأهم مشهد فيها.",
+  description: "أداة بسيطة تولّد قصة أطفال عربية مخصصة بأسلوب إسلامي، مع صورة لأهم مشهد فيها.",
+  openGraph: {
+    title: "غِراس — قصصٌ تُروى، وقيمٌ تُغرس",
+    description: "قصة أطفال عربية مخصصة بأسلوب إسلامي، مع صورة لأهم مشهد فيها.",
+    url: "https://ghiras.kids",
+    siteName: "غِراس",
+    locale: "ar",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -19,7 +29,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ar" dir="rtl" className={baloo.variable}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

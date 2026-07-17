@@ -4,7 +4,7 @@
 
 أداة ويب بسيطة تولّد قصة أطفال عربية مخصصة بأسلوب إسلامي، مع صورة واحدة لأهم مشهد في القصة.
 
-**🌐 الموقع المباشر:** [ghiras-liart.vercel.app](https://ghiras-liart.vercel.app)
+**🌐 الموقع المباشر:** [ghiras.kids](https://ghiras.kids)
 
 ## التقنيات
 
