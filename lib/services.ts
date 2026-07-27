@@ -1,5 +1,5 @@
-// بيانات صفحة الخدمات المدفوعة والطلب في غِراس.
-// كل ما يحتاج تعديله (وسائل التواصل، بيانات النشاط، الباقات، الأسعار) موجود هنا.
+// بيانات الخدمات الرقمية المدفوعة والطلب في غِراس.
+// كل ما يحتاج تعديله (وسائل التواصل، بيانات النشاط، الخدمات، الأسعار) موجود هنا.
 
 // —— وسائل التواصل والطلب ——
 // ضعي رقم واتساب بصيغة دولية بلا رموز (مثال: 9665XXXXXXXX) لتفعيل زر واتساب.
@@ -11,6 +11,10 @@ export const ORDER_EMAIL = "cyanera38@gmail.com";
 
 // رقم وثيقة العمل الحر — يُعرض كشارة توثيق. اتركيه فارغًا لإخفاء الشارة.
 export const FREELANCE_DOC_NUMBER = "";
+
+// حالة الدفع الإلكتروني: false = «قريبًا» (تُعرض قنوات الطلب البديلة).
+// اجعليه true بعد تفعيل بوابة الدفع.
+export const PAYMENT_ENABLED = false;
 
 // —— بيانات النشاط (تُعرض في الصفحات النظامية) ——
 export const BUSINESS_INFO = {
@@ -25,105 +29,94 @@ export const BUSINESS_INFO = {
   policyUpdated: "٢٧ يوليو ٢٠٢٦",
 } as const;
 
-export type Package = {
+// وصف موحّد لآلية التسليم (كل الخدمات رقمية فورية).
+export const DELIVERY_NOTE =
+  "منتج رقمي يُسلَّم فورًا عبر الموقع وعلى بريدك الإلكتروني.";
+
+export type Product = {
   id: string;
   name: string;
   tagline: string;
   price: number; // بالريال السعودي
-  unit?: string; // وصف صغير بجانب السعر (مثال: «تبدأ من»)
-  delivery: string; // آلية/مدّة التسليم — يظهر في صفحة الطلب
   features: string[];
   featured?: boolean;
   accent: "gold" | "blue" | "rose";
 };
 
-// —— الباقات المعروضة ——
-export const PACKAGES: Package[] = [
+// —— الخدمات الرقمية المدفوعة ——
+export const PRODUCTS: Product[] = [
   {
-    id: "story-plus",
-    name: "قصة مخصّصة مطوّلة",
-    tagline: "قصة أطول وأعمق باسم طفلك، بعدة مشاهد مصوّرة.",
-    price: 39,
-    unit: "للقصة",
-    delivery: "تسليم رقمي (PDF) خلال ٢–٣ أيام عمل.",
+    id: "extra-image",
+    name: "صورة إضافية للقصة",
+    tagline: "أضيفي صورة أخرى لمشهدٍ تحبّينه من القصة.",
+    price: 5,
     accent: "gold",
     features: [
-      "قصة موسّعة (٣ إلى ٥ مشاهد) لا مشهدًا واحدًا",
-      "صور متناسقة لكل مشهد رئيسي",
-      "استشهادات موثّقة من القرآن والسنة",
-      "ملف PDF أنيق جاهز للقراءة والطباعة المنزلية",
-      "مراجعة وتعديل واحد مجاني",
+      "صورة جديدة عالية الجودة لمشهدٍ تختارينه",
+      "بنفس أسلوب غِراس البصري المتناسق",
+      "تسليم رقمي فوري: تنزيل مباشر + نسخة على بريدك",
     ],
   },
   {
-    id: "values-book",
-    name: "كتاب القيم المصوّر",
-    tagline: "كتاب كامل يغرس عدة قيم، بغلاف يحمل اسم طفلك.",
-    price: 149,
-    unit: "للكتاب",
-    delivery: "تسليم رقمي (PDF) خلال ٥–٧ أيام عمل.",
+    id: "child-likeness",
+    name: "صورة تشبه ملامح طفلك",
+    tagline: "رسمة كرتونية تحاكي ملامح طفلك ليصير بطل الصورة حقًّا.",
+    price: 9,
     accent: "blue",
     featured: true,
     features: [
-      "كتاب من ٨ إلى ١٢ مشهدًا بأسلوب بصري موحّد",
-      "غلاف مخصّص باسم الطفل وصورته الرمزية",
-      "حتى ٣ قيم مترابطة في قصة واحدة",
-      "تنسيق طباعي احترافي بجودة عالية (PDF)",
-      "مراجعتان وتعديلات حتى الرضا",
+      "رسمة تحاكي ملامح الطفل (لون الشعر، العينين، وغيرها)",
+      "تجعل الطفل بطل قصته بشكلٍ شخصيّ",
+      "تسليم رقمي فوري: تنزيل مباشر + نسخة على بريدك",
     ],
   },
   {
-    id: "printed-gift",
-    name: "حزمة الإهداء المطبوعة",
-    tagline: "نسخة مطبوعة بغلاف مقوّى، هدية تبقى في الذاكرة.",
-    price: 249,
-    unit: "تبدأ من",
-    delivery: "تسليم رقمي فوري بعد الاعتماد، وشحن النسخة المطبوعة خلال ٧–١٤ يوم عمل.",
+    id: "full-illustrated",
+    name: "قصة مصوّرة كاملة",
+    tagline: "حوّلي القصة إلى كتابٍ مصوّر: صورة لكل مشهد.",
+    price: 25,
     accent: "rose",
     features: [
-      "كل ما في «كتاب القيم المصوّر»",
-      "نسخة مطبوعة بغلاف مقوّى وورق فاخر",
-      "تغليف هدية أنيق",
-      "شحن داخل المملكة",
-      "النسخة الرقمية مرفقة كذلك",
+      "صورة مستقلّة لكل مشهد رئيسي في القصة",
+      "تجربة كتاب مصوّر متكامل لطفلك",
+      "تنسيق مناسب للقراءة على الشاشة والطباعة المنزلية",
+      "تسليم رقمي فوري: تنزيل مباشر + نسخة على بريدك",
     ],
   },
 ];
 
-export function getPackage(id: string | undefined): Package | undefined {
-  return PACKAGES.find((p) => p.id === id);
+export function getProduct(id: string | undefined): Product | undefined {
+  return PRODUCTS.find((p) => p.id === id);
 }
 
 // —— بناء رسالة الطلب لروابط البريد وواتساب ——
 export type OrderFields = {
   buyerName?: string;
   childName?: string;
-  age?: string;
-  value?: string;
+  storyTitle?: string;
   details?: string;
 };
 
-export function buildOrderText(pkg: Package, f: OrderFields = {}): string {
+export function buildOrderText(product: Product, f: OrderFields = {}): string {
   return [
-    `السلام عليكم، أرغب في طلب باقة «${pkg.name}» من غِراس (${pkg.price} ر.س).`,
+    `السلام عليكم، أرغب في خدمة «${product.name}» من غِراس (${product.price} ر.س).`,
     "",
     `اسم مقدّم الطلب: ${f.buyerName ?? ""}`,
     `اسم الطفل: ${f.childName ?? ""}`,
-    `عمر الطفل: ${f.age ?? ""}`,
-    `القيمة/الفكرة المطلوبة: ${f.value ?? ""}`,
+    `عنوان القصة (إن وُجد): ${f.storyTitle ?? ""}`,
     `تفاصيل إضافية: ${f.details ?? ""}`,
   ].join("\n");
 }
 
-export function orderMailto(pkg: Package, f: OrderFields = {}): string {
-  const subject = `طلب باقة: ${pkg.name} — غِراس`;
+export function orderMailto(product: Product, f: OrderFields = {}): string {
+  const subject = `طلب خدمة: ${product.name} — غِراس`;
   return `mailto:${ORDER_EMAIL}?subject=${encodeURIComponent(
     subject
-  )}&body=${encodeURIComponent(buildOrderText(pkg, f))}`;
+  )}&body=${encodeURIComponent(buildOrderText(product, f))}`;
 }
 
-export function orderWhatsapp(pkg: Package, f: OrderFields = {}): string {
+export function orderWhatsapp(product: Product, f: OrderFields = {}): string {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    buildOrderText(pkg, f)
+    buildOrderText(product, f)
   )}`;
 }
