@@ -24,7 +24,7 @@ export default async function CheckoutPage({
   }
 
   return (
-    <PageShell title="إتمام الطلب" subtitle="راجعي تفاصيل خدمتك ثم أكملي الطلب.">
+    <PageShell title="إتمام الطلب" subtitle="مراجعة تفاصيل الخدمة ثم إتمام الطلب.">
       <div className="grid gap-8 md:grid-cols-[1fr_1.1fr]">
         {/* ملخّص الطلب */}
         <aside className="flex h-fit flex-col gap-4 rounded-3xl border border-line bg-white p-6 shadow-[0_14px_44px_-18px_rgba(42,37,48,0.22)]">

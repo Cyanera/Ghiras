@@ -30,12 +30,6 @@ const ACCENTS = {
   rose: { ring: "border-rose", chip: "bg-rose-soft text-rose-deep", check: "text-rose-deep", btn: "bg-rose-deep text-white hover:brightness-110" },
 } as const;
 
-const STEPS = [
-  { n: "١", title: "أنشئي قصتك", body: "ابدئي بمولّد القصة المجاني: اسم الطفل، عمره، والقيمة التي تودّين غرسها." },
-  { n: "٢", title: "اختاري الخدمة", body: "أضيفي صورة أخرى، أو رسمة تشبه ملامح طفلك، أو حوّليها قصة مصوّرة كاملة." },
-  { n: "٣", title: "استلميها فورًا", body: "منتج رقمي يصلك مباشرةً على الموقع وعلى بريدك — بلا انتظار." },
-];
-
 export default function KhadamatPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 py-10 sm:py-14">
@@ -48,7 +42,7 @@ export default function KhadamatPage() {
           خدمات غِراس
         </h1>
         <p className="mt-1 max-w-xl text-lg font-medium text-ink-soft sm:text-xl">
-          لمساتٌ مصوّرة تجعل قصة طفلك أجمل وأقرب إلى قلبه.
+          لمساتٌ مصوّرة تجعل قصة الطفل أجمل وأقرب إلى قلبه.
         </p>
 
         {FREELANCE_DOC_NUMBER.trim().length > 0 && (
@@ -62,13 +56,13 @@ export default function KhadamatPage() {
       {/* تنويه: الأداة المجانية تبقى متاحة */}
       <div className="mx-auto mt-8 flex w-full max-w-2xl flex-col items-center justify-between gap-4 rounded-2xl border border-line bg-blue-soft px-5 py-4 text-center sm:flex-row sm:text-start">
         <p className="text-sm leading-relaxed text-ink sm:text-base">
-          مولّد القصة القصيرة مع صورةٍ واحدة مجانيٌّ دائمًا. الخدمات أدناه إضافاتٌ اختيارية لإثراء قصتك.
+          مولّد القصة القصيرة مع صورةٍ واحدة مجانيٌّ دائمًا. والخدمات أدناه إضافاتٌ اختيارية لإثراء القصة.
         </p>
         <Link
           href="/"
           className="shrink-0 rounded-full border-2 border-blue px-4 py-2 text-sm font-bold text-blue-deep transition hover:bg-blue hover:text-white"
         >
-          أنشئي قصة مجانًا
+          إنشاء قصة مجانًا
         </Link>
       </div>
 
@@ -116,7 +110,7 @@ export default function KhadamatPage() {
                   href={`/checkout?product=${product.id}`}
                   className={`block rounded-full px-5 py-3 text-center font-bold transition ${a.btn}`}
                 >
-                  اطلبي هذه الخدمة
+                  طلب هذه الخدمة
                 </Link>
               </div>
             </article>
@@ -125,22 +119,6 @@ export default function KhadamatPage() {
       </section>
 
       <p className="mt-6 text-center text-sm text-ink-soft">{DELIVERY_NOTE}</p>
-
-      {/* كيف تطلبين */}
-      <section className="mt-16">
-        <h2 className="text-center text-2xl font-black text-ink sm:text-3xl">كيف تطلبين؟</h2>
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
-          {STEPS.map((s) => (
-            <div key={s.n} className="flex flex-col items-center gap-3 rounded-3xl border border-line bg-white p-6 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gold-soft text-2xl font-black text-ink">
-                {s.n}
-              </span>
-              <h3 className="text-lg font-bold text-ink">{s.title}</h3>
-              <p className="text-sm leading-relaxed text-ink-soft">{s.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       <SiteFooter />
     </main>

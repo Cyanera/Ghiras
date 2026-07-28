@@ -13,7 +13,7 @@ export default function TermsPage() {
     <PageShell title="الشروط والأحكام" updated={BUSINESS_INFO.policyUpdated}>
       <Section title="مقدّمة">
         <p>
-          مرحبًا بك في غِراس. باستخدامك للموقع أو طلبك لأيٍّ من خدماته، فإنك توافقين
+          مرحبًا بكم في غِراس. باستخدام الموقع أو طلب أيٍّ من خدماته، فإنكم توافقون
           على هذه الشروط والأحكام. يُرجى قراءتها بعناية.
         </p>
       </Section>

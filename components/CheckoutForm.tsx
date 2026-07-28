@@ -5,7 +5,6 @@ import {
   buildOrderText,
   PAYMENT_ENABLED,
   WHATSAPP_NUMBER,
-  ORDER_EMAIL,
   type Product,
 } from "@/lib/services";
 
@@ -17,10 +16,6 @@ export default function CheckoutForm({ product }: { product: Product }) {
 
   const fields = { buyerName, childName, storyTitle, details };
   const hasWhatsapp = WHATSAPP_NUMBER.trim().length > 0;
-
-  const mailto = `mailto:${ORDER_EMAIL}?subject=${encodeURIComponent(
-    `طلب خدمة: ${product.name} — غِراس`
-  )}&body=${encodeURIComponent(buildOrderText(product, fields))}`;
 
   const whatsapp = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     buildOrderText(product, fields)
@@ -48,7 +43,7 @@ export default function CheckoutForm({ product }: { product: Product }) {
             عنوان القصة <span className="text-sm font-normal text-ink-soft">(اختياري)</span>
           </label>
           <input id="storyTitle" type="text" value={storyTitle} maxLength={80}
-            onChange={(e) => setStoryTitle(e.target.value)} placeholder="إن كنتِ قد أنشأتِ القصة" className={field} />
+            onChange={(e) => setStoryTitle(e.target.value)} placeholder="إن كانت القصة قد أُنشئت" className={field} />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="details" className="font-bold">
@@ -67,7 +62,7 @@ export default function CheckoutForm({ product }: { product: Product }) {
           type="button"
           className="btn-gradient rounded-full px-6 py-4 text-lg font-bold text-white"
         >
-          ادفعي {product.price} ر.س
+          ادفع {product.price} ر.س
         </button>
       ) : (
         <div className="flex flex-col gap-3">
@@ -76,25 +71,15 @@ export default function CheckoutForm({ product }: { product: Product }) {
           </div>
           <p className="text-center text-sm leading-relaxed text-ink-soft">
             نعمل على تفعيل الدفع الإلكتروني الآمن (مدى، وآبل باي، وبطاقات الائتمان).
-            حتى ذلك الحين يسعدنا استقبال طلبك عبر البريد أو واتساب، ونكمله معك مباشرةً.
+            {hasWhatsapp && " ولطلب الخدمة الآن يمكن التواصل عبر واتساب."}
           </p>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {hasWhatsapp && (
-              <a href={whatsapp} target="_blank" rel="noopener noreferrer"
-                className="flex-1 rounded-full bg-grass px-5 py-3 text-center font-bold text-white transition hover:brightness-110">
-                اطلبي عبر واتساب
-              </a>
-            )}
-            <a href={mailto}
-              className={`flex-1 rounded-full px-5 py-3 text-center font-bold transition ${
-                hasWhatsapp
-                  ? "border border-line bg-white text-ink hover:border-blue"
-                  : "btn-gradient text-white"
-              }`}>
-              اطلبي عبر البريد
+          {hasWhatsapp && (
+            <a href={whatsapp} target="_blank" rel="noopener noreferrer"
+              className="rounded-full bg-grass px-5 py-3 text-center font-bold text-white transition hover:brightness-110">
+              الطلب عبر واتساب
             </a>
-          </div>
+          )}
         </div>
       )}
     </div>

@@ -350,7 +350,7 @@ export default function GhirasApp() {
           {/* خدمات إضافية لإثراء القصة */}
           <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-line bg-page px-5 py-5">
             <div className="flex flex-col gap-1 text-center">
-              <h3 className="font-bold text-ink">أضيفي لمسة أجمل لقصة {heroName || "طفلك"}</h3>
+              <h3 className="font-bold text-ink">لمسة أجمل لقصة {heroName || "الطفل"}</h3>
               <p className="text-sm text-ink-soft">
                 خدمات رقمية اختيارية تُسلَّم فورًا · الدفع الإلكتروني قريبًا
               </p>

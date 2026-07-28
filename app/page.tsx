@@ -23,9 +23,9 @@ export default function Home() {
         className="mt-12 flex w-full max-w-xl items-center justify-between gap-4 rounded-2xl border border-line bg-white px-5 py-4 text-start shadow-[0_10px_30px_-18px_rgba(42,37,48,0.22)] transition hover:border-blue"
       >
         <span className="flex flex-col">
-          <span className="font-bold text-ink">تبين لمسة أجمل لقصتك؟</span>
+          <span className="font-bold text-ink">لمسة أجمل للقصة</span>
           <span className="text-sm text-ink-soft">
-            أضيفي صورًا، أو رسمة تشبه ملامح طفلك، أو حوّليها قصة مصوّرة كاملة — خدمات غِراس.
+            صور إضافية، أو رسمة تشبه ملامح الطفل، أو تحويلها إلى قصة مصوّرة كاملة — خدمات غِراس.
           </span>
         </span>
         <span className="btn-gradient shrink-0 rounded-full px-5 py-2.5 text-sm font-bold text-white">

@@ -38,16 +38,16 @@ export default function AboutPage() {
       <Section title="التزامنا">
         <p>
           نحرص على أن يكون كل محتوى نقدّمه سليمًا لغويًا وقيميًا، وأن تُوثَّق
-          الاستشهادات الدينية من مصادرها. رضاك عن العمل هو معيارنا.
+          الاستشهادات الدينية من مصادرها. ورضا عملائنا عن العمل هو معيارنا.
         </p>
         <p>
-          للاطّلاع على خدماتنا وأسعارها زوري{" "}
+          للاطّلاع على الخدمات وأسعارها، زوروا{" "}
           <Link href="/khadamat" className="font-bold text-blue-deep underline-offset-4 hover:underline">
             صفحة الخدمات
           </Link>
           ، ولأي استفسار{" "}
           <Link href="/contact" className="font-bold text-blue-deep underline-offset-4 hover:underline">
-            تواصلي معنا
+            تواصلوا معنا
           </Link>
           .
         </p>
