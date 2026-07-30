@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkoutRequestSchema, firstErrorMessage } from "@/lib/schema";
 import { getProduct, buildOrderMetadata } from "@/lib/services";
 import { createInvoice, isPaymentConfigured, toHalalas } from "@/lib/moyasar";
+import { saveOrder } from "@/lib/order-store";
 
 export const runtime = "nodejs";
 
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { productId, ...fields } = parsed.data;
+  const { productId, story, ...fields } = parsed.data;
   const product = getProduct(productId);
   if (!product) {
     return NextResponse.json({ error: "الخدمة المطلوبة غير موجودة" }, { status: 404 });
@@ -56,6 +57,22 @@ export async function POST(request: Request) {
       callbackUrl: `${siteOrigin(request)}/api/moyasar/callback`,
       metadata: buildOrderMetadata(product, fields),
     });
+
+    // نحفظ الطلب مفتاحه رقم الفاتورة، ليُسلَّم آليًا عند وصول إشعار الدفع
+    // حتى لو أغلق المشتري المتصفح. فشل الحفظ لا يمنع الدفع: المتصفح يبقى
+    // قادرًا على إتمام التسليم بالقصة المحفوظة عنده.
+    if (story) {
+      await saveOrder(invoice.id, {
+        productId: product.id,
+        buyerName: fields.buyerName,
+        buyerEmail: fields.buyerEmail,
+        childName: fields.childName,
+        storyTitle: fields.storyTitle,
+        details: fields.details,
+        story,
+        createdAt: Date.now(),
+      });
+    }
 
     return NextResponse.json({ url: invoice.url });
   } catch (err) {

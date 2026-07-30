@@ -32,6 +32,10 @@ export default function CheckoutForm({
     setAttachedStory(loadOrderStory()?.title ?? "");
   }, []);
 
+  const emailNote = emailEnabled
+    ? "وتُرسل نسخة على بريدك حتى لو أغلقتِ الصفحة."
+    : "";
+
   const fields = { buyerName, buyerEmail, childName, storyTitle, details };
   const hasWhatsapp = WHATSAPP_NUMBER.trim().length > 0;
 
@@ -50,10 +54,14 @@ export default function CheckoutForm({
     setError("");
     setBusy(true);
     try {
+      // نُرفق القصة بالطلب ليتمّ التسليم على البريد آليًا من الخادم،
+      // دون الحاجة لبقاء المشتري في المتصفح بعد الدفع.
+      const story = loadOrderStory() ?? undefined;
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, ...fields }),
+        body: JSON.stringify({ productId: product.id, ...fields, story }),
       });
 
       const data = (await res.json()) as { url?: string; error?: string };
@@ -147,7 +155,8 @@ export default function CheckoutForm({
           {attachedStory ? (
             <>
               <span className="font-bold text-grass">✔</span> القصة مُرفقة بالطلب
-              {attachedStory && <> — «{attachedStory}»</>}، وستُسلَّم الخدمة فورًا بعد الدفع.
+              {attachedStory && <> — «{attachedStory}»</>}، وستُسلَّم الخدمة فورًا بعد
+              الدفع. {emailNote}
             </>
           ) : (
             <>

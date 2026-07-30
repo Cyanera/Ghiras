@@ -10,7 +10,7 @@ import {
 
 type Delivered = { caption: string; image: string };
 
-type Phase = "checking" | "needStory" | "working" | "done" | "error";
+type Phase = "checking" | "needStory" | "working" | "done" | "emailed" | "error";
 
 export default function OrderDelivery({
   paymentId,
@@ -44,17 +44,13 @@ export default function OrderDelivery({
       return;
     }
 
-    const story = loadOrderStory();
-    if (!story) {
-      setPhase("needStory");
-      return;
-    }
-
-    void run(story);
+    // القصة قد تكون محفوظة على الخادم مع الطلب، فنُحاول دائمًا:
+    // إن لم يجدها الخادم أجاب needStory وطلبناها من المشتري.
+    void run(loadOrderStory() ?? undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentId]);
 
-  async function run(story: StoredStory) {
+  async function run(story?: StoredStory) {
     setPhase("working");
     setError("");
 
@@ -66,13 +62,32 @@ export default function OrderDelivery({
       });
 
       const data = (await res.json()) as {
+        status?: "delivered" | "already" | "needStory";
         images?: Delivered[];
         failed?: number;
         emailed?: boolean;
         error?: string;
       };
 
-      if (!res.ok || !data.images?.length) {
+      if (!res.ok) {
+        setError(data.error ?? "تعذّر إنجاز الخدمة الآن.");
+        setPhase("error");
+        return;
+      }
+
+      // الخادم لا يملك القصة (ولا المتصفح) — نطلبها من المشترية.
+      if (data.status === "needStory") {
+        setPhase("needStory");
+        return;
+      }
+
+      // أنجزه إشعار ميسر قبل أن تُفتح الصفحة: الصور في بريدها.
+      if (data.status === "already") {
+        setPhase("emailed");
+        return;
+      }
+
+      if (!data.images?.length) {
         setError(data.error ?? "تعذّر إنجاز الخدمة الآن.");
         setPhase("error");
         return;
@@ -178,6 +193,19 @@ export default function OrderDelivery({
     );
   }
 
+  if (phase === "emailed") {
+    return (
+      <div className={box}>
+        <p className="text-4xl">📬</p>
+        <h3 className="font-black text-ink">أرسلناها على بريدك</h3>
+        <p className="text-sm leading-relaxed text-ink-soft">
+          أُنجزت «{productName}» وأُرسلت إلى بريدك الإلكتروني. تحققي من صندوق
+          الوارد — وإن لم تجديها فانظري في «المهملات» أو راسلينا برقم الطلب.
+        </p>
+      </div>
+    );
+  }
+
   if (phase === "error") {
     return (
       <div className={box}>
@@ -187,11 +215,7 @@ export default function OrderDelivery({
         </p>
         <button
           type="button"
-          onClick={() => {
-            const story = loadOrderStory();
-            if (story) void run(story);
-            else setPhase("needStory");
-          }}
+          onClick={() => void run(loadOrderStory() ?? undefined)}
           className="rounded-full bg-blue-deep px-6 py-3 font-bold text-white transition hover:brightness-110"
         >
           أعيدي المحاولة

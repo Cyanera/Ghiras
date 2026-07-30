@@ -85,8 +85,20 @@ export const imageRequestSchema = z.object({
 
 // طلب بدء الدفع لخدمة مدفوعة. لا يحتوي المبلغ إطلاقًا: السعر يُقرأ في الخادم
 // من قائمة PRODUCTS حتى لا يكون قابلًا للتلاعب من المتصفح.
+export const storyPayloadSchema = z.object({
+  title: z.string().trim().min(1, "عنوان القصة مطلوب").max(200),
+  story: z.string().trim().min(1, "نص القصة مطلوب").max(8000),
+  key_scene: z.string().trim().max(1000).optional().default(""),
+  image_prompt: z.string().trim().max(2000).optional().default(""),
+});
+
 export const checkoutRequestSchema = z.object({
   productId: z.string().trim().min(1, "الخدمة غير محددة"),
+  /**
+   * القصة التي ستُنفَّذ عليها الخدمة. تُحفظ على الخادم لحظة إنشاء الفاتورة
+   * ليتمّ التسليم آليًا حتى لو أغلق المشتري المتصفح بعد الدفع.
+   */
+  story: storyPayloadSchema.optional(),
   buyerName: z
     .string({ required_error: "الاسم مطلوب" })
     .trim()
@@ -109,19 +121,13 @@ export const checkoutRequestSchema = z.object({
 
 export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;
 
-// طلب تسليم خدمة مدفوعة. القصة تأتي من متصفح المشتري (لا نحفظ القصص على
-// الخادم)، والتصريح بالتنفيذ هو paymentId الذي يُتحقق منه عند ميسر.
+// طلب تسليم خدمة مدفوعة من المتصفح. التصريح بالتنفيذ هو paymentId الذي
+// يُتحقق منه عند ميسر. القصة تُقرأ من الطلب المحفوظ، ولا تُرسل من هنا إلّا
+// حين لا يجدها الخادم.
 export const fulfillRequestSchema = z.object({
   paymentId: z.string().trim().min(1, "معرّف الدفع مطلوب").max(120),
-  story: z.object(
-    {
-      title: z.string().trim().min(1, "عنوان القصة مطلوب").max(200),
-      story: z.string().trim().min(1, "نص القصة مطلوب").max(8000),
-      key_scene: z.string().trim().max(1000).optional().default(""),
-      image_prompt: z.string().trim().max(2000).optional().default(""),
-    },
-    { required_error: "نص القصة مطلوب" }
-  ),
+  /** تُرسل فقط حين لا يجد الخادم الطلب محفوظًا. */
+  story: storyPayloadSchema.optional(),
   /** المشهد الذي اختاره المشتري (خدمة الصورة الإضافية). */
   scene: z.string().trim().max(400).optional().default(""),
   /** ملامح الطفل (خدمة الصورة الشبيهة). */

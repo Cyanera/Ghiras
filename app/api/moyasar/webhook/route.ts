@@ -1,10 +1,12 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { fetchPayment, isPaymentConfigured } from "@/lib/moyasar";
-import { handlePaidPayment } from "@/lib/orders";
+import { deliverOrder } from "@/lib/orders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// التسليم هنا يولّد الصور، فيحتاج المدّة نفسها التي يحتاجها /api/fulfill.
+export const maxDuration = 300;
 
 // مستقبل الـ webhook من ميسر — هذا هو المصدر الموثوق لتأكيد الطلبات، لأنّه
 // يعمل حتى لو أغلق المشتري المتصفح قبل رجوعه للموقع.
@@ -57,10 +59,20 @@ export async function POST(request: Request) {
 
   try {
     // لا نثق بالمبلغ الوارد في الإشعار: نُعيد جلب العملية من ميسر.
-    handlePaidPayment(await fetchPayment(paymentId));
+    // هذا هو مسار التسليم الموثوق — يعمل بلا متصفح المشتري.
+    const outcome = await deliverOrder(await fetchPayment(paymentId));
+
+    // فشل تقني عابر: نطلب من ميسر إعادة الإشعار كي تُسلَّم الخدمة لاحقًا.
+    if (outcome.status === "failed") {
+      return NextResponse.json({ error: outcome.reason }, { status: 500 });
+    }
+
+    if (outcome.status === "needStory") {
+      // لا قصة محفوظة (المخزن غير مهيَّأ عادةً) — التسليم يبقى على المتصفح.
+      console.error(`[webhook] لا توجد قصة محفوظة للعملية ${paymentId}`);
+    }
   } catch {
     console.error(`[webhook] تعذّر جلب العملية ${paymentId}`);
-    // 500 كي يُعيد ميسر إرسال الإشعار لاحقًا.
     return NextResponse.json({ error: "verification failed" }, { status: 500 });
   }
 

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { fetchPayment, isPaymentConfigured, type MoyasarPayment } from "@/lib/moyasar";
-import { handlePaidPayment } from "@/lib/orders";
+import { deliverOrder } from "@/lib/orders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// مسار POST قد يُنجز التسليم (توليد صور)، فيحتاج مدّة أطول.
+export const maxDuration = 300;
 
 // عنوان العودة الذي نُمرّره لميسر عند إنشاء الفاتورة.
 // ميسر قد يستخدمه بطريقتين، فنتعامل مع الاثنتين:
@@ -41,7 +43,10 @@ export async function POST(request: Request) {
 
   try {
     // لا نثق بجسم الإشعار: نُعيد جلب العملية من ميسر بالمفتاح السري.
-    handlePaidPayment(await fetchPayment(paymentId));
+    const outcome = await deliverOrder(await fetchPayment(paymentId));
+    if (outcome.status === "failed") {
+      return NextResponse.json({ error: outcome.reason }, { status: 500 });
+    }
   } catch {
     console.error(`[callback] تعذّر جلب العملية ${paymentId}`);
     // 500 كي يُعيد ميسر المحاولة.
