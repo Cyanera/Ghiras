@@ -19,7 +19,7 @@ const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
 // medium = توازن جيد بين السرعة والجودة؛ يمكن رفعها إلى high من متغيرات البيئة
 const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY ?? "medium";
 
-function getClient(): OpenAI {
+export function getClient(): OpenAI {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("MISSING_API_KEY");
   }
@@ -37,7 +37,7 @@ type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
  * ينفّذ طلب إكمال نصّي بصيغة JSON، ويجرّب النموذج الأساسي ثم الاحتياطي إن
  * تعذّر الوصول للأساسي (مثلًا عدم توفّره في الحساب)، فلا يتعطّل التطبيق.
  */
-async function createTextCompletion(client: OpenAI, messages: ChatMessage[]) {
+export async function createTextCompletion(client: OpenAI, messages: ChatMessage[]) {
   const models = [...new Set([TEXT_MODEL, FALLBACK_TEXT_MODEL])];
   let lastError: unknown;
   for (const model of models) {

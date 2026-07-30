@@ -1,18 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buildOrderText, WHATSAPP_NUMBER, type Product } from "@/lib/services";
+import { loadOrderStory } from "@/lib/story-store";
 
 export default function CheckoutForm({
   product,
   paymentEnabled,
   testMode = false,
+  emailEnabled = false,
 }: {
   product: Product;
   /** يأتي من الخادم: هل مفاتيح ميسر مضبوطة؟ */
   paymentEnabled: boolean;
   /** مفاتيح تجريبية — نعرض تنويهًا كي لا يُظنّ الدفع حقيقيًا. */
   testMode?: boolean;
+  /** هل إرسال البريد مُهيَّأ؟ لا نَعِد بنسخة بريدية بدونه. */
+  emailEnabled?: boolean;
 }) {
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -21,9 +25,19 @@ export default function CheckoutForm({
   const [details, setDetails] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // null = لم نتحقق بعد (لا يمكن قراءة localStorage قبل التحميل في المتصفح).
+  const [attachedStory, setAttachedStory] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAttachedStory(loadOrderStory()?.title ?? "");
+  }, []);
 
   const fields = { buyerName, buyerEmail, childName, storyTitle, details };
   const hasWhatsapp = WHATSAPP_NUMBER.trim().length > 0;
+
+  // خدمة الملامح لا تُنفَّذ بلا وصف؛ نجعل الحقل إلزاميًا ونوضّح المطلوب.
+  const needsLooks = product.id === "child-likeness";
+  const needsScene = product.id === "extra-image";
 
   const whatsapp = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     buildOrderText(product, fields)
@@ -80,7 +94,9 @@ export default function CheckoutForm({
             onChange={(e) => setBuyerEmail(e.target.value)} placeholder="name@example.com"
             className={`text-start ${field}`} />
           <p className="text-xs leading-relaxed text-ink-soft">
-            نرسل الخدمة وإيصال الدفع على هذا البريد.
+            {emailEnabled
+              ? "نرسل نسخة من الخدمة على هذا البريد، ونستخدمه للتواصل بشأن طلبك."
+              : "نستخدمه للتواصل بشأن طلبك عند الحاجة."}
           </p>
         </div>
         <div className="flex flex-col gap-2">
@@ -97,14 +113,50 @@ export default function CheckoutForm({
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="details" className="font-bold">
-            تفاصيل إضافية <span className="text-sm font-normal text-ink-soft">(اختياري)</span>
+            {needsLooks ? "ملامح الطفل" : needsScene ? "المشهد المطلوب" : "تفاصيل إضافية"}{" "}
+            {!needsLooks && (
+              <span className="text-sm font-normal text-ink-soft">(اختياري)</span>
+            )}
           </label>
-          <textarea id="details" value={details} maxLength={400} rows={2}
+          <textarea id="details" value={details} maxLength={400} rows={needsLooks ? 3 : 2}
+            required={needsLooks}
             onChange={(e) => setDetails(e.target.value)}
-            placeholder="مثال: ملامح الطفل، المشهد المطلوب، ملاحظات…"
+            placeholder={
+              needsLooks
+                ? "مثال: شعر أسود قصير مموّج، عينان بنيتان، بشرة حنطية، يلبس ثوبًا أبيض…"
+                : needsScene
+                  ? "أي لحظة من القصة تحبين رسمها؟ اتركيه فارغًا ونختار أجمل مشهد."
+                  : "ملاحظات تحبين أن نراعيها…"
+            }
             className={`resize-none ${field}`} />
+          {needsLooks && (
+            <p className="text-xs leading-relaxed text-ink-soft">
+              كلما دقّ الوصف، كانت الرسمة أشبه بطفلك.
+            </p>
+          )}
         </div>
       </div>
+
+      {/* حالة إرفاق القصة — نُخبر المشترية قبل الدفع لا بعده. */}
+      {paymentEnabled && attachedStory !== null && (
+        <div
+          className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+            attachedStory ? "bg-blue-soft text-ink" : "bg-gold-soft text-ink"
+          }`}
+        >
+          {attachedStory ? (
+            <>
+              <span className="font-bold text-grass">✔</span> القصة مُرفقة بالطلب
+              {attachedStory && <> — «{attachedStory}»</>}، وستُسلَّم الخدمة فورًا بعد الدفع.
+            </>
+          ) : (
+            <>
+              لم نجد قصة محفوظة في هذا المتصفح. لا مشكلة — بعد الدفع سنطلب منك لصق
+              نص القصة، ثم تُسلَّم الخدمة فورًا.
+            </>
+          )}
+        </div>
+      )}
 
       {/* الدفع */}
       {paymentEnabled ? (

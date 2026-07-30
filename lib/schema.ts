@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+/**
+ * أول رسالة خطأ عربية صالحة للعرض. رسائل zod الافتراضية بالإنجليزية
+ * ("Required") لا تصلح للمستخدمة، فنستبدلها برسالة عامة.
+ */
+export function firstErrorMessage(error: z.ZodError, fallback: string): string {
+  const message = error.issues[0]?.message ?? "";
+  return /[؀-ۿ]/.test(message) ? message : fallback;
+}
+
 export const AGE_GROUPS = ["3-4", "5-6", "7-8"] as const;
 
 export const VALUES = [
@@ -99,3 +108,24 @@ export const checkoutRequestSchema = z.object({
 });
 
 export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;
+
+// طلب تسليم خدمة مدفوعة. القصة تأتي من متصفح المشتري (لا نحفظ القصص على
+// الخادم)، والتصريح بالتنفيذ هو paymentId الذي يُتحقق منه عند ميسر.
+export const fulfillRequestSchema = z.object({
+  paymentId: z.string().trim().min(1, "معرّف الدفع مطلوب").max(120),
+  story: z.object(
+    {
+      title: z.string().trim().min(1, "عنوان القصة مطلوب").max(200),
+      story: z.string().trim().min(1, "نص القصة مطلوب").max(8000),
+      key_scene: z.string().trim().max(1000).optional().default(""),
+      image_prompt: z.string().trim().max(2000).optional().default(""),
+    },
+    { required_error: "نص القصة مطلوب" }
+  ),
+  /** المشهد الذي اختاره المشتري (خدمة الصورة الإضافية). */
+  scene: z.string().trim().max(400).optional().default(""),
+  /** ملامح الطفل (خدمة الصورة الشبيهة). */
+  childLooks: z.string().trim().max(400).optional().default(""),
+});
+
+export type FulfillRequest = z.infer<typeof fulfillRequestSchema>;

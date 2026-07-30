@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import CheckoutForm from "@/components/CheckoutForm";
-import { getProduct, DELIVERY_NOTE } from "@/lib/services";
+import { getProduct, DELIVERY_NOTE, EMAIL_NOTE } from "@/lib/services";
 import { isPaymentConfigured, isTestMode } from "@/lib/moyasar";
+import { isEmailConfigured } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "إتمام الطلب — غِراس",
@@ -48,7 +49,10 @@ export default async function CheckoutPage({
               {product.price} <span className="text-base font-bold text-ink-soft">ر.س</span>
             </span>
           </div>
-          <p className="text-xs leading-relaxed text-ink-soft">{DELIVERY_NOTE}</p>
+          <p className="text-xs leading-relaxed text-ink-soft">
+            {DELIVERY_NOTE}
+            {isEmailConfigured() && ` ${EMAIL_NOTE}`}
+          </p>
 
           <Link
             href="/khadamat"
@@ -64,6 +68,7 @@ export default async function CheckoutPage({
             product={product}
             paymentEnabled={isPaymentConfigured()}
             testMode={isTestMode()}
+            emailEnabled={isEmailConfigured()}
           />
         </div>
       </div>

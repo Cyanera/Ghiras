@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/PageShell";
-import { DELIVERY_NOTE, ORDER_EMAIL } from "@/lib/services";
+import OrderDelivery from "@/components/OrderDelivery";
+import { ORDER_EMAIL } from "@/lib/services";
 import { fetchPayment, isPaymentConfigured, orderReference, verifyPayment } from "@/lib/moyasar";
+import { isEmailConfigured } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "نتيجة الدفع — غِراس",
@@ -13,7 +15,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type Outcome =
-  | { kind: "paid"; productName: string; reference: string; email?: string }
+  | {
+      kind: "paid";
+      paymentId: string;
+      productId: string;
+      productName: string;
+      reference: string;
+      email?: string;
+    }
   | { kind: "failed"; message: string }
   | { kind: "unverified"; message: string };
 
@@ -41,6 +50,8 @@ async function resolveOutcome(paymentId: string | undefined): Promise<Outcome> {
   if (verified.ok) {
     return {
       kind: "paid",
+      paymentId: payment.id,
+      productId: verified.product.id,
       productName: verified.product.name,
       reference: orderReference(payment.id),
       email: payment.metadata?.buyer_email,
@@ -73,13 +84,21 @@ export default async function CheckoutResultPage({
 }) {
   const { id } = await searchParams;
   const outcome = await resolveOutcome(id);
+  const emailConfigured = isEmailConfigured();
 
   const card =
     "flex flex-col gap-4 rounded-3xl border border-line bg-white p-6 shadow-[0_14px_44px_-18px_rgba(42,37,48,0.22)] sm:p-8";
 
   if (outcome.kind === "paid") {
     return (
-      <PageShell title="تم الدفع بنجاح" subtitle="وصلنا طلبك، وبدأنا العمل عليه.">
+      <PageShell title="تم الدفع بنجاح" subtitle="نُجهّز طلبك الآن.">
+        {/* التسليم يبدأ تلقائيًا: القصة محفوظة في متصفح المشتري. */}
+        <OrderDelivery
+          paymentId={outcome.paymentId}
+          productId={outcome.productId}
+          productName={outcome.productName}
+        />
+
         <div className={card}>
           <p className="text-4xl">🌱</p>
           <h2 className="text-xl font-black text-ink">شكرًا لك!</h2>
@@ -92,15 +111,12 @@ export default async function CheckoutResultPage({
             <span className="font-black text-ink" dir="ltr">{outcome.reference}</span>
           </div>
 
-          <p className="text-sm leading-relaxed text-ink-soft">
-            {DELIVERY_NOTE}
-            {outcome.email && (
-              <>
-                {" "}سنرسل الخدمة وإيصال الدفع على{" "}
-                <span dir="ltr" className="font-bold text-ink">{outcome.email}</span>.
-              </>
-            )}
-          </p>
+          {outcome.email && emailConfigured && (
+            <p className="text-sm leading-relaxed text-ink-soft">
+              وسنرسل نسخة على{" "}
+              <span dir="ltr" className="font-bold text-ink">{outcome.email}</span>.
+            </p>
+          )}
           <p className="text-sm leading-relaxed text-ink-soft">
             لأي استفسار راسلينا على{" "}
             <a href={`mailto:${ORDER_EMAIL}`} className="font-bold text-blue-deep underline-offset-4 hover:underline" dir="ltr">

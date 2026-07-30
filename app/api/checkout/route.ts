@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkoutRequestSchema } from "@/lib/schema";
+import { checkoutRequestSchema, firstErrorMessage } from "@/lib/schema";
 import { getProduct, buildOrderMetadata } from "@/lib/services";
 import { createInvoice, isPaymentConfigured, toHalalas } from "@/lib/moyasar";
 
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const parsed = checkoutRequestSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "تحققي من بيانات الطلب" },
+      { error: firstErrorMessage(parsed.error, "تحققي من بيانات الطلب") },
       { status: 400 }
     );
   }
