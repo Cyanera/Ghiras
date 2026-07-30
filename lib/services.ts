@@ -12,9 +12,9 @@ export const ORDER_EMAIL = "cyanera38@gmail.com";
 // رقم وثيقة العمل الحر — يُعرض كشارة توثيق. اتركيه فارغًا لإخفاء الشارة.
 export const FREELANCE_DOC_NUMBER = "";
 
-// حالة الدفع الإلكتروني: false = «قريبًا» (تُعرض قنوات الطلب البديلة).
-// اجعليه true بعد تفعيل بوابة الدفع.
-export const PAYMENT_ENABLED = false;
+// الدفع الإلكتروني يُفعَّل تلقائيًا بمجرد ضبط MOYASAR_SECRET_KEY في متغيّرات
+// البيئة (انظري .env.example). وبدونه تُعرض قنوات الطلب البديلة تلقائيًا،
+// فلا حاجة لتعديل أي شيء هنا.
 
 // —— بيانات النشاط (تُعرض في الصفحات النظامية) ——
 export const BUSINESS_INFO = {
@@ -92,6 +92,7 @@ export function getProduct(id: string | undefined): Product | undefined {
 // —— بناء رسالة الطلب لروابط البريد وواتساب ——
 export type OrderFields = {
   buyerName?: string;
+  buyerEmail?: string;
   childName?: string;
   storyTitle?: string;
   details?: string;
@@ -102,10 +103,34 @@ export function buildOrderText(product: Product, f: OrderFields = {}): string {
     `السلام عليكم، أرغب في خدمة «${product.name}» من غِراس (${product.price} ر.س).`,
     "",
     `اسم مقدّم الطلب: ${f.buyerName ?? ""}`,
+    `البريد الإلكتروني: ${f.buyerEmail ?? ""}`,
     `اسم الطفل: ${f.childName ?? ""}`,
     `عنوان القصة (إن وُجد): ${f.storyTitle ?? ""}`,
     `تفاصيل إضافية: ${f.details ?? ""}`,
   ].join("\n");
+}
+
+// ميسر يقبل في metadata أزواج «نص: نص» فقط، ويحدّ طولها. نُرفق بيانات الطلب
+// هناك لتظهر مع كل عملية في لوحة ميسر وفي الـ webhook، فتكفي لتسليم الخدمة.
+const META_MAX = 240;
+
+export function buildOrderMetadata(
+  product: Product,
+  f: OrderFields = {}
+): Record<string, string> {
+  const meta: Record<string, string> = { product_id: product.id };
+  const put = (key: string, value: string | undefined) => {
+    const v = value?.trim();
+    if (v) meta[key] = v.slice(0, META_MAX);
+  };
+
+  put("buyer_name", f.buyerName);
+  put("buyer_email", f.buyerEmail);
+  put("child_name", f.childName);
+  put("story_title", f.storyTitle);
+  put("details", f.details);
+
+  return meta;
 }
 
 export function orderMailto(product: Product, f: OrderFields = {}): string {

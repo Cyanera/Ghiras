@@ -73,3 +73,29 @@ export type Story = {
 export const imageRequestSchema = z.object({
   image_prompt: z.string().trim().min(1).max(2000),
 });
+
+// طلب بدء الدفع لخدمة مدفوعة. لا يحتوي المبلغ إطلاقًا: السعر يُقرأ في الخادم
+// من قائمة PRODUCTS حتى لا يكون قابلًا للتلاعب من المتصفح.
+export const checkoutRequestSchema = z.object({
+  productId: z.string().trim().min(1, "الخدمة غير محددة"),
+  buyerName: z
+    .string({ required_error: "الاسم مطلوب" })
+    .trim()
+    .min(1, "الاسم مطلوب")
+    .max(40, "الاسم طويل جدًا"),
+  buyerEmail: z
+    .string({ required_error: "البريد الإلكتروني مطلوب" })
+    .trim()
+    .min(1, "البريد الإلكتروني مطلوب")
+    .max(120, "البريد طويل جدًا")
+    .email("تحققي من صيغة البريد الإلكتروني"),
+  childName: z
+    .string({ required_error: "اسم الطفل مطلوب" })
+    .trim()
+    .min(1, "اسم الطفل مطلوب")
+    .max(40, "الاسم طويل جدًا"),
+  storyTitle: z.string().trim().max(80, "العنوان طويل جدًا").optional().default(""),
+  details: z.string().trim().max(400, "التفاصيل طويلة جدًا").optional().default(""),
+});
+
+export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;

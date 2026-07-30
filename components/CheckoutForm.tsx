@@ -1,20 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import {
-  buildOrderText,
-  PAYMENT_ENABLED,
-  WHATSAPP_NUMBER,
-  type Product,
-} from "@/lib/services";
+import { buildOrderText, WHATSAPP_NUMBER, type Product } from "@/lib/services";
 
-export default function CheckoutForm({ product }: { product: Product }) {
+export default function CheckoutForm({
+  product,
+  paymentEnabled,
+  testMode = false,
+}: {
+  product: Product;
+  /** يأتي من الخادم: هل مفاتيح ميسر مضبوطة؟ */
+  paymentEnabled: boolean;
+  /** مفاتيح تجريبية — نعرض تنويهًا كي لا يُظنّ الدفع حقيقيًا. */
+  testMode?: boolean;
+}) {
   const [buyerName, setBuyerName] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
   const [childName, setChildName] = useState("");
   const [storyTitle, setStoryTitle] = useState("");
   const [details, setDetails] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  const fields = { buyerName, childName, storyTitle, details };
+  const fields = { buyerName, buyerEmail, childName, storyTitle, details };
   const hasWhatsapp = WHATSAPP_NUMBER.trim().length > 0;
 
   const whatsapp = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
@@ -24,18 +32,60 @@ export default function CheckoutForm({ product }: { product: Product }) {
   const field =
     "rounded-2xl border border-line bg-page px-4 py-3 outline-none transition placeholder:text-ink-soft/50 focus:border-blue focus:bg-white";
 
+  async function startPayment() {
+    setError("");
+    setBusy(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, ...fields }),
+      });
+
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        setError(data.error ?? "تعذّر بدء عملية الدفع الآن. حاولي مرة أخرى.");
+        setBusy(false);
+        return;
+      }
+
+      // تحويل إلى صفحة الدفع الآمنة عند ميسر (تبقى الشاشة معطّلة أثناء التحويل).
+      window.location.href = data.url;
+    } catch {
+      setError("تعذّر الاتصال بالخدمة. تحققي من الشبكة وحاولي مرة أخرى.");
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-5">
+    <form
+      className="flex flex-col gap-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (paymentEnabled) void startPayment();
+      }}
+    >
       {/* بيانات الطلب */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label htmlFor="buyerName" className="font-bold">اسمك</label>
-          <input id="buyerName" type="text" value={buyerName} maxLength={40}
+          <input id="buyerName" type="text" value={buyerName} maxLength={40} required
+            autoComplete="name"
             onChange={(e) => setBuyerName(e.target.value)} placeholder="اسم مقدّم الطلب" className={field} />
         </div>
         <div className="flex flex-col gap-2">
+          <label htmlFor="buyerEmail" className="font-bold">البريد الإلكتروني</label>
+          <input id="buyerEmail" type="email" value={buyerEmail} maxLength={120} required
+            autoComplete="email" dir="ltr"
+            onChange={(e) => setBuyerEmail(e.target.value)} placeholder="name@example.com"
+            className={`text-start ${field}`} />
+          <p className="text-xs leading-relaxed text-ink-soft">
+            نرسل الخدمة وإيصال الدفع على هذا البريد.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
           <label htmlFor="childName" className="font-bold">اسم الطفل</label>
-          <input id="childName" type="text" value={childName} maxLength={40}
+          <input id="childName" type="text" value={childName} maxLength={40} required
             onChange={(e) => setChildName(e.target.value)} placeholder="بطل القصة" className={field} />
         </div>
         <div className="flex flex-col gap-2">
@@ -57,13 +107,32 @@ export default function CheckoutForm({ product }: { product: Product }) {
       </div>
 
       {/* الدفع */}
-      {PAYMENT_ENABLED ? (
-        <button
-          type="button"
-          className="btn-gradient rounded-full px-6 py-4 text-lg font-bold text-white"
-        >
-          ادفع {product.price} ر.س
-        </button>
+      {paymentEnabled ? (
+        <div className="flex flex-col gap-3">
+          {testMode && (
+            <p className="rounded-2xl bg-gold-soft px-4 py-3 text-center text-sm font-bold text-ink">
+              وضع تجريبي — لن يُخصم أي مبلغ حقيقي.
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={busy}
+            className="btn-gradient rounded-full px-6 py-4 text-lg font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {busy ? "جارٍ تحويلك للدفع…" : `ادفع ${product.price} ر.س`}
+          </button>
+
+          {error && (
+            <p role="alert" className="text-center text-sm font-medium text-rose-deep">
+              {error}
+            </p>
+          )}
+
+          <p className="text-center text-xs leading-relaxed text-ink-soft">
+            يتم الدفع في صفحة آمنة عبر بوابة «ميسر». لا تمرّ بيانات بطاقتك على غِراس.
+          </p>
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-center gap-2 rounded-full bg-gold-soft px-6 py-4 text-center font-bold text-ink">
@@ -82,6 +151,6 @@ export default function CheckoutForm({ product }: { product: Product }) {
           )}
         </div>
       )}
-    </div>
+    </form>
   );
 }
