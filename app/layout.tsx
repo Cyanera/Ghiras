@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 /* خط Baloo Bhaijaan 2 — عربي مدوّر مرح، ملف متغيّر يغطي الأوزان 400–800 */
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
