@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   buildOrderText,
+  isValidEmail,
   PAYMENT_ENABLED,
   WHATSAPP_NUMBER,
   type Product,
@@ -10,11 +11,15 @@ import {
 
 export default function CheckoutForm({ product }: { product: Product }) {
   const [buyerName, setBuyerName] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [childName, setChildName] = useState("");
   const [storyTitle, setStoryTitle] = useState("");
   const [details, setDetails] = useState("");
 
-  const fields = { buyerName, childName, storyTitle, details };
+  const fields = { buyerName, email: email.trim(), childName, storyTitle, details };
+  const emailOk = isValidEmail(email);
+  const showEmailError = emailTouched && !emailOk;
   const hasWhatsapp = WHATSAPP_NUMBER.trim().length > 0;
 
   const whatsapp = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
@@ -32,6 +37,19 @@ export default function CheckoutForm({ product }: { product: Product }) {
           <label htmlFor="buyerName" className="font-bold">اسمك</label>
           <input id="buyerName" type="text" value={buyerName} maxLength={40}
             onChange={(e) => setBuyerName(e.target.value)} placeholder="اسم مقدّم الطلب" className={field} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email" className="font-bold">البريد الإلكتروني</label>
+          <input id="email" type="email" dir="ltr" inputMode="email" autoComplete="email" required
+            value={email} maxLength={120}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => setEmailTouched(true)}
+            aria-invalid={showEmailError} aria-describedby="email-hint"
+            placeholder="name@example.com"
+            className={`text-right ${field} ${showEmailError ? "border-rose-deep" : ""}`} />
+          <p id="email-hint" className={`text-sm ${showEmailError ? "text-rose-deep" : "text-ink-soft"}`}>
+            {showEmailError ? "أدخل بريدًا إلكترونيًا صحيحًا" : "سنرسل إليك الطلب على هذا البريد"}
+          </p>
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="childName" className="font-bold">اسم الطفل</label>
@@ -60,7 +78,9 @@ export default function CheckoutForm({ product }: { product: Product }) {
       {PAYMENT_ENABLED ? (
         <button
           type="button"
-          className="btn-gradient rounded-full px-6 py-4 text-lg font-bold text-white"
+          disabled={!emailOk}
+          onClick={() => setEmailTouched(true)}
+          className="btn-gradient rounded-full px-6 py-4 text-lg font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           ادفع {product.price} ر.س
         </button>
@@ -75,8 +95,12 @@ export default function CheckoutForm({ product }: { product: Product }) {
           </p>
 
           {hasWhatsapp && (
-            <a href={whatsapp} target="_blank" rel="noopener noreferrer"
-              className="rounded-full bg-grass px-5 py-3 text-center font-bold text-white transition hover:brightness-110">
+            <a href={emailOk ? whatsapp : undefined} target="_blank" rel="noopener noreferrer"
+              aria-disabled={!emailOk}
+              onClick={(e) => { if (!emailOk) { e.preventDefault(); setEmailTouched(true); } }}
+              className={`rounded-full bg-grass px-5 py-3 text-center font-bold text-white transition ${
+                emailOk ? "hover:brightness-110" : "cursor-not-allowed opacity-50"
+              }`}>
               الطلب عبر واتساب
             </a>
           )}

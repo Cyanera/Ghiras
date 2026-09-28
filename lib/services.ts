@@ -89,9 +89,15 @@ export function getProduct(id: string | undefined): Product | undefined {
   return PRODUCTS.find((p) => p.id === id);
 }
 
+// تحقق مبسّط من صيغة البريد قبل إتمام الطلب
+export function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+}
+
 // —— بناء رسالة الطلب لروابط البريد وواتساب ——
 export type OrderFields = {
   buyerName?: string;
+  email?: string;
   childName?: string;
   storyTitle?: string;
   details?: string;
@@ -102,6 +108,7 @@ export function buildOrderText(product: Product, f: OrderFields = {}): string {
     `السلام عليكم، أرغب في خدمة «${product.name}» من غِراس (${product.price} ر.س).`,
     "",
     `اسم مقدّم الطلب: ${f.buyerName ?? ""}`,
+    `البريد الإلكتروني لاستلام الطلب: ${f.email ?? ""}`,
     `اسم الطفل: ${f.childName ?? ""}`,
     `عنوان القصة (إن وُجد): ${f.storyTitle ?? ""}`,
     `تفاصيل إضافية: ${f.details ?? ""}`,
