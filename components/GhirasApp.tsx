@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { AGE_GROUPS, VALUES, type Story } from "@/lib/schema";
 import { PRODUCTS } from "@/lib/services";
+import { saveOrderStory } from "@/lib/story-store";
 
 type AgeGroup = (typeof AGE_GROUPS)[number];
 type Value = (typeof VALUES)[number];
@@ -352,7 +353,7 @@ export default function GhirasApp() {
             <div className="flex flex-col gap-1 text-center">
               <h3 className="font-bold text-ink">لمسة أجمل لقصة {heroName || "الطفل"}</h3>
               <p className="text-sm text-ink-soft">
-                خدمات رقمية اختيارية تُسلَّم فورًا · الدفع الإلكتروني قريبًا
+                خدمات رقمية اختيارية تُسلَّم فورًا بعد الدفع
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -360,6 +361,15 @@ export default function GhirasApp() {
                 <Link
                   key={p.id}
                   href={`/checkout?product=${p.id}`}
+                  // نُرفق القصة الحالية بالطلب (في المتصفح فقط) ليتمّ تسليمها آليًا بعد الدفع.
+                  onClick={() =>
+                    saveOrderStory({
+                      title: story.title,
+                      story: story.story,
+                      key_scene: story.key_scene,
+                      image_prompt: story.image_prompt,
+                    })
+                  }
                   className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-4 text-center transition hover:border-blue"
                 >
                   <span className="text-sm font-bold text-ink">{p.name}</span>

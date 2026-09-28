@@ -5,9 +5,11 @@ import SiteFooter from "@/components/SiteFooter";
 import {
   PRODUCTS,
   DELIVERY_NOTE,
+  EMAIL_NOTE,
   FREELANCE_DOC_NUMBER,
   type Product,
 } from "@/lib/services";
+import { isEmailConfigured } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "خدمات غِراس — صور ورسومات مخصّصة لقصص أطفالكم",
@@ -118,7 +120,10 @@ export default function KhadamatPage() {
         })}
       </section>
 
-      <p className="mt-6 text-center text-sm text-ink-soft">{DELIVERY_NOTE}</p>
+      <p className="mt-6 text-center text-sm text-ink-soft">
+        {DELIVERY_NOTE}
+        {isEmailConfigured() && ` ${EMAIL_NOTE}`}
+      </p>
 
       <SiteFooter />
     </main>

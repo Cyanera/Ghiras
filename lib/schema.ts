@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+/**
+ * أول رسالة خطأ عربية صالحة للعرض. رسائل zod الافتراضية بالإنجليزية
+ * ("Required") لا تصلح للمستخدمة، فنستبدلها برسالة عامة.
+ */
+export function firstErrorMessage(error: z.ZodError, fallback: string): string {
+  const message = error.issues[0]?.message ?? "";
+  return /[؀-ۿ]/.test(message) ? message : fallback;
+}
+
 export const AGE_GROUPS = ["3-4", "5-6", "7-8"] as const;
 
 export const VALUES = [
@@ -73,3 +82,58 @@ export type Story = {
 export const imageRequestSchema = z.object({
   image_prompt: z.string().trim().min(1).max(2000),
 });
+
+// طلب بدء الدفع لخدمة مدفوعة. لا يحتوي المبلغ إطلاقًا: السعر يُقرأ في الخادم
+// من قائمة PRODUCTS حتى لا يكون قابلًا للتلاعب من المتصفح.
+export const storyPayloadSchema = z.object({
+  title: z.string().trim().min(1, "عنوان القصة مطلوب").max(200),
+  story: z.string().trim().min(1, "نص القصة مطلوب").max(8000),
+  key_scene: z.string().trim().max(1000).optional().default(""),
+  image_prompt: z.string().trim().max(2000).optional().default(""),
+});
+
+export const checkoutRequestSchema = z.object({
+  productId: z.string().trim().min(1, "الخدمة غير محددة"),
+  /**
+   * القصة التي ستُنفَّذ عليها الخدمة. تُحفظ على الخادم لحظة إنشاء الفاتورة
+   * ليتمّ التسليم آليًا حتى لو أغلق المشتري المتصفح بعد الدفع.
+   */
+  story: storyPayloadSchema.optional(),
+  buyerName: z
+    .string({ required_error: "الاسم مطلوب" })
+    .trim()
+    .min(1, "الاسم مطلوب")
+    .max(40, "الاسم طويل جدًا"),
+  buyerEmail: z
+    .string({ required_error: "البريد الإلكتروني مطلوب" })
+    .trim()
+    .min(1, "البريد الإلكتروني مطلوب")
+    .max(120, "البريد طويل جدًا")
+    .email("تحققي من صيغة البريد الإلكتروني"),
+  childName: z
+    .string({ required_error: "اسم الطفل مطلوب" })
+    .trim()
+    .min(1, "اسم الطفل مطلوب")
+    .max(40, "الاسم طويل جدًا"),
+  storyTitle: z.string().trim().max(80, "العنوان طويل جدًا").optional().default(""),
+  details: z.string().trim().max(400, "التفاصيل طويلة جدًا").optional().default(""),
+  /** كود خصم اختياري؛ يُتحقق منه ويُحسب السعر في الخادم. */
+  discountCode: z.string().trim().max(20, "كود الخصم غير صالح").optional().default(""),
+});
+
+export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;
+
+// طلب تسليم خدمة مدفوعة من المتصفح. التصريح بالتنفيذ هو paymentId الذي
+// يُتحقق منه عند ميسر. القصة تُقرأ من الطلب المحفوظ، ولا تُرسل من هنا إلّا
+// حين لا يجدها الخادم.
+export const fulfillRequestSchema = z.object({
+  paymentId: z.string().trim().min(1, "معرّف الدفع مطلوب").max(120),
+  /** تُرسل فقط حين لا يجد الخادم الطلب محفوظًا. */
+  story: storyPayloadSchema.optional(),
+  /** المشهد الذي اختاره المشتري (خدمة الصورة الإضافية). */
+  scene: z.string().trim().max(400).optional().default(""),
+  /** ملامح الطفل (خدمة الصورة الشبيهة). */
+  childLooks: z.string().trim().max(400).optional().default(""),
+});
+
+export type FulfillRequest = z.infer<typeof fulfillRequestSchema>;

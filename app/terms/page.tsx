@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { Section, List } from "@/components/PageShell";
 import { BUSINESS_INFO } from "@/lib/services";
+import { isPaymentConfigured } from "@/lib/moyasar";
 
 export const metadata: Metadata = {
   title: "الشروط والأحكام — غِراس",
@@ -38,9 +39,19 @@ export default function TermsPage() {
 
       <Section title="الأسعار والدفع">
         <p>
-          تُعرض أسعار الخدمات بالريال السعودي وتشمل ما يلزم من الرسوم. عند تفعيل
-          الدفع الإلكتروني، تُعالَج المدفوعات عبر بوابة دفع آمنة معتمدة. وحتى ذلك
-          الحين تُستقبل الطلبات عبر البريد الإلكتروني أو واتساب.
+          تُعرض أسعار الخدمات بالريال السعودي وتشمل ما يلزم من الرسوم.{" "}
+          {isPaymentConfigured() ? (
+            <>
+              تُعالَج المدفوعات عبر بوابة «ميسر» في صفحة دفع آمنة، ولا تمرّ بيانات
+              بطاقتك على غِراس ولا تُحفظ عندنا.
+            </>
+          ) : (
+            <>
+              عند تفعيل الدفع الإلكتروني، تُعالَج المدفوعات عبر بوابة دفع آمنة
+              معتمدة. وحتى ذلك الحين تُستقبل الطلبات عبر البريد الإلكتروني أو
+              واتساب.
+            </>
+          )}
         </p>
       </Section>
 
