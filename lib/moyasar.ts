@@ -6,6 +6,7 @@
 // قائمة الأسعار، فلا يمكن التلاعب به من المتصفح.
 
 import { getProduct, type Product } from "@/lib/services";
+import { finalPrice } from "@/lib/discounts";
 
 const API_BASE = "https://api.moyasar.com/v1";
 
@@ -119,8 +120,10 @@ export function verifyPayment(payment: MoyasarPayment): VerifiedPayment {
     return { ok: false, reason: "unknown_product", payment };
   }
 
-  // حتى مع الدفع الناجح، نتأكد أنّ المبلغ والعملة يطابقان سعر الخدمة المعلن.
-  if (payment.currency !== "SAR" || payment.amount !== toHalalas(product.price)) {
+  // حتى مع الدفع الناجح، نتأكد أنّ المبلغ والعملة يطابقان سعر الخدمة المعلن
+  // (بعد الخصم إن وُجد كود؛ الكود في metadata يضعه الخادم عند إنشاء الفاتورة).
+  const expected = toHalalas(finalPrice(product.price, payment.metadata?.discount_code));
+  if (payment.currency !== "SAR" || payment.amount !== expected) {
     return { ok: false, reason: "mismatch", payment };
   }
 

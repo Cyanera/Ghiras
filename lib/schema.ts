@@ -117,6 +117,8 @@ export const checkoutRequestSchema = z.object({
     .max(40, "الاسم طويل جدًا"),
   storyTitle: z.string().trim().max(80, "العنوان طويل جدًا").optional().default(""),
   details: z.string().trim().max(400, "التفاصيل طويلة جدًا").optional().default(""),
+  /** كود خصم اختياري؛ يُتحقق منه ويُحسب السعر في الخادم. */
+  discountCode: z.string().trim().max(20, "كود الخصم غير صالح").optional().default(""),
 });
 
 export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;

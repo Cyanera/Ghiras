@@ -3,6 +3,7 @@ import { checkoutRequestSchema, firstErrorMessage } from "@/lib/schema";
 import { getProduct, buildOrderMetadata } from "@/lib/services";
 import { createInvoice, isPaymentConfigured, toHalalas } from "@/lib/moyasar";
 import { saveOrder } from "@/lib/order-store";
+import { finalPrice, isValidDiscountCode, normalizeCode } from "@/lib/discounts";
 
 export const runtime = "nodejs";
 
@@ -43,19 +44,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const { productId, story, ...fields } = parsed.data;
+  const { productId, story, discountCode, ...fields } = parsed.data;
   const product = getProduct(productId);
   if (!product) {
     return NextResponse.json({ error: "الخدمة المطلوبة غير موجودة" }, { status: 404 });
   }
 
+  // كود مكتوب لكنه غير صالح: نرفض بدل أن نحاسب بالسعر الكامل دون علم المشتري.
+  if (discountCode && !isValidDiscountCode(discountCode)) {
+    return NextResponse.json({ error: "كود الخصم غير صالح" }, { status: 400 });
+  }
+  const code = discountCode ? normalizeCode(discountCode) : "";
+
+  const metadata = buildOrderMetadata(product, fields);
+  if (code) metadata.discount_code = code;
+
   try {
     const invoice = await createInvoice({
       // السعر من قائمة الخدمات في الخادم — لا من الطلب.
-      amount: toHalalas(product.price),
+      amount: toHalalas(finalPrice(product.price, code)),
       description: `غِراس — ${product.name}`,
       callbackUrl: `${siteOrigin(request)}/api/moyasar/callback`,
-      metadata: buildOrderMetadata(product, fields),
+      metadata,
     });
 
     // نحفظ الطلب مفتاحه رقم الفاتورة، ليُسلَّم آليًا عند وصول إشعار الدفع

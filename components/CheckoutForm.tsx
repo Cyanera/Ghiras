@@ -25,6 +25,10 @@ export default function CheckoutForm({
   const [details, setDetails] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [discountInput, setDiscountInput] = useState("");
+  const [discount, setDiscount] = useState<{ code: string; percent: number; price: number } | null>(null);
+  const [discountError, setDiscountError] = useState("");
+  const [checkingCode, setCheckingCode] = useState(false);
   // null = لم نتحقق بعد (لا يمكن قراءة localStorage قبل التحميل في المتصفح).
   const [attachedStory, setAttachedStory] = useState<string | null>(null);
 
@@ -50,6 +54,33 @@ export default function CheckoutForm({
   const field =
     "rounded-2xl border border-line bg-page px-4 py-3 outline-none transition placeholder:text-ink-soft/50 focus:border-blue focus:bg-white";
 
+  const payPrice = discount?.price ?? product.price;
+
+  async function applyDiscount() {
+    const code = discountInput.trim();
+    if (!code) return;
+    setDiscountError("");
+    setCheckingCode(true);
+    try {
+      const res = await fetch("/api/discount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, code }),
+      });
+      const data = (await res.json()) as { percent?: number; price?: number; error?: string };
+      if (!res.ok || data.price === undefined || !data.percent) {
+        setDiscount(null);
+        setDiscountError(data.error ?? "كود الخصم غير صالح");
+      } else {
+        setDiscount({ code, percent: data.percent, price: data.price });
+      }
+    } catch {
+      setDiscountError("تعذّر التحقق من الكود. حاولي مرة أخرى.");
+    } finally {
+      setCheckingCode(false);
+    }
+  }
+
   async function startPayment() {
     setError("");
     setBusy(true);
@@ -61,7 +92,12 @@ export default function CheckoutForm({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, ...fields, story }),
+        body: JSON.stringify({
+          productId: product.id,
+          ...fields,
+          story,
+          discountCode: discount?.code ?? "",
+        }),
       });
 
       const data = (await res.json()) as { url?: string; error?: string };
@@ -176,12 +212,49 @@ export default function CheckoutForm({
             </p>
           )}
 
+          {/* كود الخصم */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="discountCode" className="font-bold">
+              كود الخصم <span className="text-sm font-normal text-ink-soft">(اختياري)</span>
+            </label>
+            <div className="flex gap-2">
+              <input id="discountCode" type="text" value={discountInput} maxLength={20} dir="ltr"
+                autoComplete="off"
+                onChange={(e) => {
+                  setDiscountInput(e.target.value);
+                  setDiscount(null);
+                  setDiscountError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void applyDiscount();
+                  }
+                }}
+                placeholder="أدخلي الكود"
+                className={`min-w-0 flex-1 text-start uppercase ${field}`} />
+              <button type="button" onClick={() => void applyDiscount()}
+                disabled={checkingCode || !discountInput.trim() || discount !== null}
+                className="shrink-0 rounded-2xl border-2 border-blue px-5 font-bold text-blue-deep transition hover:bg-blue hover:text-white disabled:cursor-not-allowed disabled:opacity-50">
+                {checkingCode ? "…" : discount ? "مُطبَّق" : "تطبيق"}
+              </button>
+            </div>
+            {discount && (
+              <p className="text-sm font-medium text-grass">
+                ✔ خصم {discount.percent}٪ — السعر بعد الخصم {discount.price} ر.س بدل {product.price} ر.س
+              </p>
+            )}
+            {discountError && (
+              <p role="alert" className="text-sm font-medium text-rose-deep">{discountError}</p>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={busy}
             className="btn-gradient rounded-full px-6 py-4 text-lg font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {busy ? "جارٍ تحويلك للدفع…" : `ادفع ${product.price} ر.س`}
+            {busy ? "جارٍ تحويلك للدفع…" : `ادفع ${payPrice} ر.س`}
           </button>
 
           {error && (
